@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#111827" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>운동 세트 타이머</title>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #111827;
+      color: #f9fafb;
+      overscroll-behavior: none;
+    }
+    .app {
+      max-width: 480px;
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 18px;
+      background: linear-gradient(180deg, #111827 0%, #1f2937 100%);
+    }
+    .top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 24px; }
+    h2 { font-size: 21px; margin-bottom: 14px; }
+    h3 { font-size: 16px; margin-bottom: 10px; }
+    .muted { color: #9ca3af; font-size: 13px; }
+    .card {
+      background: rgba(31, 41, 55, 0.95);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.22);
+    }
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      color: #d1d5db;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    input, select {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 13px;
+      font-size: 16px;
+      color: #fff;
+      background: #111827;
+      outline: none;
+    }
+    input:focus, select:focus { border-color: #60a5fa; }
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 13px 14px;
+      font-size: 15px;
+      font-weight: 900;
+      color: white;
+      background: #2563eb;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    button.secondary { background: #374151; }
+    button.danger { background: #dc2626; }
+    button.green { background: #16a34a; }
+    button.orange { background: #ea580c; }
+    button.full { width: 100%; margin-top: 10px; }
+    .row { display: flex; gap: 10px; }
+    .row > * { flex: 1; }
+    .program-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 15px;
+      border-radius: 16px;
+      background: #1f2937;
+      border: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 10px;
+    }
+    .program-main { flex: 1; min-width: 0; }
+    .program-title {
+      font-size: 17px;
+      font-weight: 900;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .exercise-chip {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #111827;
+      margin-top: 8px;
+      font-size: 15px;
+    }
+    .mini-btn {
+      padding: 8px 10px;
+      font-size: 13px;
+      border-radius: 10px;
+      flex: none;
+    }
+    .hidden { display: none !important; }
+    .timer-screen { text-align: center; padding-top: 20px; }
+    .phase {
+      font-size: 24px;
+      font-weight: 900;
+      color: #93c5fd;
+      margin-bottom: 10px;
+    }
+    .exercise-name {
+      font-size: 30px;
+      font-weight: 900;
+      margin-bottom: 14px;
+      word-break: keep-all;
+    }
+    .time {
+      font-size: 90px;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -3px;
+      margin: 24px 0 18px;
+    }
+    .set-info {
+      font-size: 18px;
+      color: #d1d5db;
+      margin-bottom: 18px;
+    }
+    .progress-wrap {
+      width: 100%;
+      height: 18px;
+      background: #111827;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+      margin: 18px 0 8px;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #60a5fa, #22c55e);
+      transition: width 0.25s linear;
+    }
+    .empty { text-align: center; padding: 40px 10px; color: #9ca3af; }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .stat-box {
+      background: #111827;
+      border-radius: 14px;
+      padding: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .stat-num { font-size: 24px; font-weight: 900; margin-top: 4px; }
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-row input { width: 22px; height: 22px; }
+    .history-item {
+      padding: 12px;
+      border-radius: 12px;
+      background: #111827;
+      margin-top: 8px;
+      color: #d1d5db;
+      font-size: 14px;
+    }
+    .footer-space { height: 24px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section id="listView">
+      <div class="top">
+        <div>
+          <h1>운동 타이머</h1>
+          <p class="muted">저장한 프로그램을 선택해서 실행</p>
+        </div>
+        <button onclick="openEditor()">+ 추가</button>
+      </div>
+
+      <div class="card">
+        <h3>오늘 운동 통계</h3>
+        <div class="stat-grid">
+          <div class="stat-box">
+            <div class="muted">오늘 완료</div>
+            <div class="stat-num" id="todayCount">0회</div>
+          </div>
+          <div class="stat-box">
+            <div class="muted">누적 완료</div>
+            <div class="stat-num" id="totalCount">0회</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>앱 설정</h3>
+        <div class="toggle-row">
+          <div>
+            <b>비프음</b>
+            <p class="muted">전환 3초 전 삑삑삑</p>
+          </div>
+          <input id="beepToggle" type="checkbox" checked onchange="saveSettings()" />
+        </div>
+        <div class="toggle-row">
+          <div>
+            <b>진동</b>
+            <p class="muted">운동/휴식 전환 알림</p>
+          </div>
+          <input id="vibrateToggle" type="checkbox" checked onchange="saveSettings()" />
+        </div>
+        <div class="toggle-row">
+          <div>
+            <b>음성 안내</b>
+            <p class="muted">운동 시작, 휴식, 완료 안내</p>
+          </div>
+          <input id="voiceToggle" type="checkbox" checked onchange="saveSettings()" />
+        </div>
+        <div class="toggle-row">
+          <div>
+            <b>화면 안꺼짐</b>
+            <p class="muted">지원되는 브라우저에서만 작동</p>
+          </div>
+          <input id="wakeToggle" type="checkbox" checked onchange="saveSettings()" />
+        </div>
+      </div>
+
+      <div id="programList"></div>
+
+      <div class="card">
+        <h3>최근 완료 기록</h3>
+        <div id="historyList"></div>
+      </div>
+    </section>
+
+    <section id="editorView" class="hidden">
+      <div class="top">
+        <button class="secondary" onclick="showList()">← 목록</button>
+        <button class="danger" id="deleteBtn" onclick="deleteProgram()">삭제</button>
+      </div>
+
+      <div class="card">
+        <h2>프로그램 설정</h2>
+        <label>프로그램 제목</label>
+        <input id="programTitle" placeholder="예: 전신 인터벌 루틴" />
+
+        <div class="row">
+          <div>
+            <label>세트수</label>
+            <input id="setCount" type="number" min="1" step="1" inputmode="numeric" pattern="[0-9]*" value="3" />
+          </div>
+          <div>
+            <label>운동시간(초)</label>
+            <input id="workTime" type="number" min="1" step="1" inputmode="numeric" pattern="[0-9]*" value="40" />
+          </div>
+        </div>
+
+        <label>휴식시간(초)</label>
+        <input id="restTime" type="number" min="0" step="1" inputmode="numeric" pattern="[0-9]*" value="20" />
+      </div>
+
+      <div class="card">
+        <h3>운동 목록</h3>
+        <div class="row">
+          <input id="exerciseInput" placeholder="예: 스쿼트" />
+          <button class="secondary" onclick="addExercise()">추가</button>
+        </div>
+        <div id="exerciseList" style="margin-top: 12px;"></div>
+      </div>
+
+      <button class="full green" onclick="saveProgram()">저장</button>
+      <button class="full" onclick="startSelectedProgram()">저장 후 시작</button>
+    </section>
+
+    <section id="timerView" class="hidden timer-screen">
+      <div class="top">
+        <button class="secondary" onclick="stopTimer()">← 종료</button>
+        <button class="orange" id="pauseBtn" onclick="togglePause()">일시정지</button>
+      </div>
+
+      <div class="card">
+        <div class="phase" id="phaseText">준비</div>
+        <div class="exercise-name" id="currentExercise">10초 뒤 시작</div>
+        <div class="time" id="timeDisplay">10</div>
+        <div class="set-info" id="setInfo">준비 중</div>
+        <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+        <p class="muted" id="nextInfo">다음 동작을 준비하세요</p>
+      </div>
+    </section>
+
+    <div class="footer-space"></div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "mobileWorkoutSetTimerPrograms_v2";
+    const HISTORY_KEY = "mobileWorkoutSetTimerHistory_v1";
+    const SETTINGS_KEY = "mobileWorkoutSetTimerSettings_v1";
+
+    let programs = loadJson(STORAGE_KEY, []);
+    let history = loadJson(HISTORY_KEY, []);
+    let settings = loadJson(SETTINGS_KEY, {
+      beep: true,
+      vibrate: true,
+      voice: true,
+      wakeLock: true
+    });
+
+    let editingId = null;
+    let currentExercises = [];
+    let timer = null;
+    let runningState = null;
+    let isPaused = false;
+    let audioContext = null;
+    let wakeLock = null;
+
+    function loadJson(key, fallback) {
+      try { return JSON.parse(localStorage.getItem(key)) || fallback; }
+      catch { return fallback; }
+    }
+
+    function saveJson(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function uid() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    }
+
+    function showOnly(viewId) {
+      document.getElementById("listView").classList.add("hidden");
+      document.getElementById("editorView").classList.add("hidden");
+      document.getElementById("timerView").classList.add("hidden");
+      document.getElementById(viewId).classList.remove("hidden");
+    }
+
+    function showList() {
+      stopIntervalOnly();
+      releaseWakeLock();
+      renderAll();
+      showOnly("listView");
+    }
+
+    function renderAll() {
+      renderSettings();
+      renderStats();
+      renderProgramList();
+      renderHistory();
+    }
+
+    function renderSettings() {
+      document.getElementById("beepToggle").checked = !!settings.beep;
+      document.getElementById("vibrateToggle").checked = !!settings.vibrate;
+      document.getElementById("voiceToggle").checked = !!settings.voice;
+      document.getElementById("wakeToggle").checked = !!settings.wakeLock;
+    }
+
+    function saveSettings() {
+      settings = {
+        beep: document.getElementById("beepToggle").checked,
+        vibrate: document.getElementById("vibrateToggle").checked,
+        voice: document.getElementById("voiceToggle").checked,
+        wakeLock: document.getElementById("wakeToggle").checked
+      };
+      saveJson(SETTINGS_KEY, settings);
+    }
+
+    function renderStats() {
+      const today = todayKey();
+      const todayRecords = history.filter(h => h.dateKey === today);
+      document.getElementById("todayCount").textContent = `${todayRecords.length}회`;
+      document.getElementById("totalCount").textContent = `${history.length}회`;
+    }
+
+    function renderHistory() {
+      const wrap = document.getElementById("historyList");
+      wrap.innerHTML = "";
+      if (history.length === 0) {
+        wrap.innerHTML = `<p class="muted">아직 완료 기록이 없습니다.</p>`;
+        return;
+      }
+      history.slice(0, 5).forEach(item => {
+        const div = document.createElement("div");
+        div.className = "history-item";
+        div.innerHTML = `<b>${escapeHtml(item.title)}</b><br>${item.finishedAtText} · ${item.setCount}세트 · ${item.exerciseCount}개 운동`;
+        wrap.appendChild(div);
+      });
+    }
+
+    function renderProgramList() {
+      const wrap = document.getElementById("programList");
+      wrap.innerHTML = "";
+      if (programs.length === 0) {
+        wrap.innerHTML = `<div class="empty">저장된 운동 프로그램이 없습니다.<br>+ 추가 버튼으로 루틴을 만들어주세요.</div>`;
+        return;
+      }
+      programs.forEach(program => {
+        const div = document.createElement("div");
+        div.className = "program-item";
+        div.innerHTML = `
+          <div class="program-main" onclick="openEditor('${program.id}')">
+            <div class="program-title">${escapeHtml(program.title)}</div>
+            <div class="muted">${program.setCount}세트 · 운동 ${program.workTime}초 · 휴식 ${program.restTime}초 · ${program.exercises.length}개 운동</div>
+          </div>
+          <button class="green mini-btn" onclick="startProgramById('${program.id}')">시작</button>
+        `;
+        wrap.appendChild(div);
+      });
+    }
+
+    function openEditor(id = null) {
+      editingId = id;
+      const program = programs.find(p => p.id === id);
+      document.getElementById("deleteBtn").classList.toggle("hidden", !program);
+      document.getElementById("programTitle").value = program ? program.title : "";
+      document.getElementById("setCount").value = program ? program.setCount : 3;
+      document.getElementById("workTime").value = program ? program.workTime : 40;
+      document.getElementById("restTime").value = program ? program.restTime : 20;
+      document.getElementById("exerciseInput").value = "";
+      currentExercises = program ? [...program.exercises] : [];
+      renderExerciseList();
+      showOnly("editorView");
+    }
+
+    function addExercise() {
+      const input = document.getElementById("exerciseInput");
+      const name = input.value.trim();
+      if (!name) return;
+      currentExercises.push(name);
+      input.value = "";
+      renderExerciseList();
+    }
+
+    function removeExercise(index) {
+      currentExercises.splice(index, 1);
+      renderExerciseList();
+    }
+
+    function renderExerciseList() {
+      const wrap = document.getElementById("exerciseList");
+      wrap.innerHTML = "";
+      if (currentExercises.length === 0) {
+        wrap.innerHTML = `<p class="muted">아직 추가된 운동이 없습니다.</p>`;
+        return;
+      }
+      currentExercises.forEach((name, index) => {
+        const div = document.createElement("div");
+        div.className = "exercise-chip";
+        div.innerHTML = `<span>${index + 1}. ${escapeHtml(name)}</span><button class="danger mini-btn" onclick="removeExercise(${index})">삭제</button>`;
+        wrap.appendChild(div);
+      });
+    }
+
+    function sanitizeNumberInput(id, min) {
+      const el = document.getElementById(id);
+      el.value = String(el.value).replace(/[^0-9]/g, "");
+      const value = parseInt(el.value, 10);
+      if (!Number.isInteger(value) || value < min) return null;
+      return value;
+    }
+
+    function readEditorProgram() {
+      const title = document.getElementById("programTitle").value.trim();
+      const setCount = sanitizeNumberInput("setCount", 1);
+      const workTime = sanitizeNumberInput("workTime", 1);
+      const restTime = sanitizeNumberInput("restTime", 0);
+
+      if (!title) { alert("프로그램 제목을 입력해주세요."); return null; }
+      if (setCount === null) { alert("세트수는 1 이상의 정수로 입력해주세요."); return null; }
+      if (workTime === null) { alert("운동시간은 1초 이상의 정수로 입력해주세요."); return null; }
+      if (restTime === null) { alert("휴식시간은 0초 이상의 정수로 입력해주세요."); return null; }
+      if (currentExercises.length === 0) { alert("운동을 1개 이상 추가해주세요."); return null; }
+
+      return { id: editingId || uid(), title, setCount, workTime, restTime, exercises: [...currentExercises] };
+    }
+
+    function saveProgram() {
+      const data = readEditorProgram();
+      if (!data) return null;
+      const index = programs.findIndex(p => p.id === data.id);
+      if (index >= 0) programs[index] = data;
+      else programs.unshift(data);
+      editingId = data.id;
+      saveJson(STORAGE_KEY, programs);
+      alert("저장되었습니다.");
+      renderProgramList();
+      return data;
+    }
+
+    function deleteProgram() {
+      if (!editingId) return;
+      if (!confirm("이 프로그램을 삭제할까요?")) return;
+      programs = programs.filter(p => p.id !== editingId);
+      saveJson(STORAGE_KEY, programs);
+      showList();
+    }
+
+    function startSelectedProgram() {
+      const program = saveProgram();
+      if (!program) return;
+      startProgram(program);
+    }
+
+    function startProgramById(id) {
+      const program = programs.find(p => p.id === id);
+      if (!program) return;
+      startProgram(program);
+    }
+
+    async function startProgram(program) {
+      stopIntervalOnly();
+      await unlockAudio();
+      await requestWakeLock();
+      isPaused = false;
+      document.getElementById("pauseBtn").textContent = "일시정지";
+      runningState = {
+        program,
+        phase: "prepare",
+        setIndex: 1,
+        exerciseIndex: 0,
+        remaining: 10,
+        phaseTotal: 10
+      };
+      showOnly("timerView");
+      speak("10초 뒤 시작합니다");
+      vibrate([120]);
+      renderTimer();
+      timer = setInterval(tick, 1000);
+    }
+
+    function tick() {
+      if (!runningState || isPaused) return;
+      if (runningState.remaining <= Math.min(3, runningState.phaseTotal) && runningState.remaining >= 1) {
+        playBeep();
+        vibrate([60]);
+      }
+      runningState.remaining -= 1;
+      if (runningState.remaining <= 0) moveNextPhase();
+      renderTimer();
+    }
+
+    function moveNextPhase() {
+      playBeep();
+      vibrate([160, 70, 160]);
+      const s = runningState;
+      const p = s.program;
+      if (s.phase === "prepare") {
+        s.phase = "work";
+        s.remaining = p.workTime;
+        s.phaseTotal = p.workTime;
+        speak(`${p.exercises[s.exerciseIndex]} 시작`);
+        return;
+      }
+      if (s.phase === "work") {
+        const isLastExercise = s.exerciseIndex >= p.exercises.length - 1;
+        const isLastSet = s.setIndex >= p.setCount;
+        if (!isLastExercise || !isLastSet) {
+          if (p.restTime > 0) {
+            s.phase = "rest";
+            s.remaining = p.restTime;
+            s.phaseTotal = p.restTime;
+            speak("휴식");
+            return;
+          }
+          moveAfterRest();
+          return;
+        }
+        finishTimer();
+        return;
+      }
+      if (s.phase === "rest") moveAfterRest();
+    }
+
+    function moveAfterRest() {
+      const s = runningState;
+      const p = s.program;
+      if (s.exerciseIndex < p.exercises.length - 1) {
+        s.exerciseIndex += 1;
+      } else {
+        s.exerciseIndex = 0;
+        s.setIndex += 1;
+      }
+      s.phase = "work";
+      s.remaining = p.workTime;
+      s.phaseTotal = p.workTime;
+      speak(`${p.exercises[s.exerciseIndex]} 시작`);
+    }
+
+    function renderTimer() {
+      if (!runningState) return;
+      const s = runningState;
+      const p = s.program;
+      const phaseText = document.getElementById("phaseText");
+      const exerciseName = document.getElementById("currentExercise");
+      const timeDisplay = document.getElementById("timeDisplay");
+      const setInfo = document.getElementById("setInfo");
+      const nextInfo = document.getElementById("nextInfo");
+      const progressBar = document.getElementById("progressBar");
+
+      timeDisplay.textContent = s.remaining;
+      const done = Math.max(0, s.phaseTotal - s.remaining);
+      const percent = s.phaseTotal > 0 ? Math.min(100, (done / s.phaseTotal) * 100) : 100;
+      progressBar.style.width = `${percent}%`;
+
+      if (s.phase === "prepare") {
+        phaseText.textContent = "준비";
+        exerciseName.textContent = "10초 뒤 시작";
+        setInfo.textContent = `${p.title}`;
+        nextInfo.textContent = `첫 운동: ${p.exercises[0]}`;
+        return;
+      }
+      if (s.phase === "work") {
+        phaseText.textContent = "운동";
+        exerciseName.textContent = p.exercises[s.exerciseIndex];
+        setInfo.textContent = `${s.setIndex}/${p.setCount}세트 · ${s.exerciseIndex + 1}/${p.exercises.length}`;
+        nextInfo.textContent = getNextInfoText();
+        return;
+      }
+      if (s.phase === "rest") {
+        phaseText.textContent = "휴식";
+        exerciseName.textContent = `다음: ${getNextExerciseName()}`;
+        setInfo.textContent = `${s.setIndex}/${p.setCount}세트 진행 중`;
+        nextInfo.textContent = "호흡을 정리하세요";
+      }
+    }
+
+    function getNextInfoText() {
+      const s = runningState;
+      const p = s.program;
+      const isLastExercise = s.exerciseIndex >= p.exercises.length - 1;
+      const isLastSet = s.setIndex >= p.setCount;
+      if (isLastExercise && isLastSet) return "마지막 동작입니다";
+      if (p.restTime > 0) return "다음은 휴식입니다";
+      return `다음: ${getNextExerciseName()}`;
+    }
+
+    function getNextExerciseName() {
+      const s = runningState;
+      const p = s.program;
+      if (s.exerciseIndex < p.exercises.length - 1) return p.exercises[s.exerciseIndex + 1];
+      if (s.setIndex < p.setCount) return p.exercises[0];
+      return "완료";
+    }
+
+    function togglePause() {
+      if (!runningState) return;
+      isPaused = !isPaused;
+      document.getElementById("pauseBtn").textContent = isPaused ? "재시작" : "일시정지";
+      speak(isPaused ? "일시정지" : "재시작");
+    }
+
+    function finishTimer() {
+      const p = runningState.program;
+      stopIntervalOnly();
+      releaseWakeLock();
+      runningState = null;
+      speak("운동 완료");
+      vibrate([250, 120, 250, 120, 250]);
+      addHistory(p);
+      alert("운동 완료!");
+      showList();
+    }
+
+    function stopTimer() {
+      if (!confirm("타이머를 종료할까요?")) return;
+      stopIntervalOnly();
+      releaseWakeLock();
+      runningState = null;
+      showList();
+    }
+
+    function stopIntervalOnly() {
+      if (timer) clearInterval(timer);
+      timer = null;
+    }
+
+    function addHistory(program) {
+      const now = new Date();
+      history.unshift({
+        id: uid(),
+        title: program.title,
+        setCount: program.setCount,
+        exerciseCount: program.exercises.length,
+        finishedAt: now.toISOString(),
+        finishedAtText: formatDateTime(now),
+        dateKey: todayKey(now)
+      });
+      history = history.slice(0, 100);
+      saveJson(HISTORY_KEY, history);
+    }
+
+    function todayKey(date = new Date()) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    function formatDateTime(date) {
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      const hh = String(date.getHours()).padStart(2, "0");
+      const mm = String(date.getMinutes()).padStart(2, "0");
+      return `${m}/${d} ${hh}:${mm}`;
+    }
+
+    async function unlockAudio() {
+      try {
+        if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioContext.state === "suspended") await audioContext.resume();
+      } catch (e) { console.log("audio unlock error", e); }
+    }
+
+    function playBeep() {
+      if (!settings.beep) return;
+      try {
+        if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+        gainNode.gain.setValueAtTime(0.12, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.18);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.18);
+      } catch (e) { console.log("beep error", e); }
+    }
+
+    function vibrate(pattern) {
+      if (!settings.vibrate) return;
+      if (navigator.vibrate) navigator.vibrate(pattern);
+    }
+
+    function speak(text) {
+      if (!settings.voice) return;
+      if (!window.speechSynthesis) return;
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = "ko-KR";
+        utter.rate = 1.05;
+        utter.pitch = 1;
+        window.speechSynthesis.speak(utter);
+      } catch (e) { console.log("speech error", e); }
+    }
+
+    async function requestWakeLock() {
+      if (!settings.wakeLock) return;
+      if (!("wakeLock" in navigator)) return;
+      try { wakeLock = await navigator.wakeLock.request("screen"); }
+      catch (e) { console.log("wake lock error", e); }
+    }
+
+    async function releaseWakeLock() {
+      try {
+        if (wakeLock) await wakeLock.release();
+        wakeLock = null;
+      } catch (e) { console.log("wake release error", e); }
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    ["setCount", "workTime", "restTime"].forEach(id => {
+      document.addEventListener("input", e => {
+        if (e.target && e.target.id === id) e.target.value = e.target.value.replace(/[^0-9]/g, "");
+      });
+    });
+
+    document.getElementById("exerciseInput").addEventListener("keydown", e => {
+      if (e.key === "Enter") addExercise();
+    });
+
+    document.addEventListener("visibilitychange", async () => {
+      if (document.visibilityState === "visible" && runningState && !isPaused) {
+        await requestWakeLock();
+      }
+    });
+
+    renderAll();
+  </script>
+</body>
+</html>
